@@ -62,8 +62,8 @@ client.on("interactionCreate", async (interaction) => {
             removeModal.setCustomId("rm-" + msg.id)
             interaction.showModal(removeModal);
             modMessages[msg.id] = interaction.user.id;
-            interaction.awaitModalSubmit({ filter: (i) => i.customId === "rm-" + msg.id, time: 60_000 }).then(response => {
-                response.deferReply({ content: "Processing...", ephemeral: true })
+            interaction.awaitModalSubmit({ filter: (i) => i.customId === "rm-" + msg.id, time: 60_000 }).then(async response => {
+                await response.deferReply({ content: "Processing...", ephemeral: true })
                 clearInterval(modIntervals[response.customId.split("-")[1]])
                 modIntervals[response.customId.split("-")[1]] = undefined;
                 modMessages[response.customId.split("-")[1]] = undefined;
@@ -72,7 +72,7 @@ client.on("interactionCreate", async (interaction) => {
 
                 let message = interaction.targetMessage;
                 message.author.send(":warning: **Message removed.**\nReason: " + reason)
-                let att = message.attachments.length;
+                let att = (message.attachments ? message.attachments.size : 0);
                 message.delete().then(r => {
                     let e = new EmbedBuilder()
                     .setAuthor({ name: r.author.username, iconURL: r.author.avatarURL()})
@@ -83,8 +83,9 @@ client.on("interactionCreate", async (interaction) => {
                         botCommands.send(`Evidence: https://discord.com/channels/1286100228008574986/${msg.channelId}/${msg.id}`)
                     })
                 })
-                interaction.editReply({ content: `> ✅ | Message with ${att} attachment${att !== 1 ? "s" : ""} deleted successfully for \`${reason}\`.`})
-            }).catch(() => {
+                response.editReply({ content: `> ✅ | Message with ${att} attachment${att !== 1 ? "s" : ""} deleted successfully for \`${reason}\`.`})
+            }).catch((err) => {
+                console.log(err)
                 console.log("FAILED")
             })
             // Times out the modal if a supervisor fails to respond to it within 60 seconds (1 minute)
